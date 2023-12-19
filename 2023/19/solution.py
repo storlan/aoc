@@ -25,14 +25,10 @@ def follow_instructions(item, all_instructions):
                 break
         if not found:
             current = instructions[-1]
-        
 
-
-    pass
 
 def a(data):
     data1, data2 = data.split("\n\n")
-    i = 0
     all_instructions = {}
     for line in data1.split("\n"):
         name, instructions = line.split("{")
@@ -43,7 +39,7 @@ def a(data):
             var_name, operator, val = re.split(r"([<>])", condition)
             all_instructions[name].append((var_name, operator, int(val), dest))
         all_instructions[name].append(instructions[-1])
-    
+
     items = []
     sum = 0
     for line in data2.split("\n"):
@@ -55,29 +51,66 @@ def a(data):
         items.append(item)
         if follow_instructions(item, all_instructions):
             sum += np.sum(list(item.values()))
-        
+    return sum
 
 
+def explore_path(current_label, bounds, accepted_paths, all_instructions, labels):
+    if current_label == "A":
+        accepted_paths.append(bounds)
+        return
+    elif current_label == "R":
+        return
+    instructions = all_instructions[current_label]
+    default_label = instructions[-1]
+    default_case_bounds = {k:v.copy() for k, v in bounds.items()}
+    instructions = instructions[:-1]
+    for instruction in instructions:
+        var_name, operator, val, dest = instruction
+        new_bounds = {k:v.copy() for k, v in default_case_bounds.items()}
+        if operator == "<":
+            new_bounds[var_name][1] = min(new_bounds[var_name][1], val - 1)
+            default_case_bounds[var_name][0] = max(default_case_bounds[var_name][0], val)
+        elif operator == ">":
+            new_bounds[var_name][0] = max(new_bounds[var_name][0], val + 1)
+            default_case_bounds[var_name][1] = min(default_case_bounds[var_name][1], val)
+        explore_path(dest, new_bounds, accepted_paths, all_instructions, labels + [dest])
+    explore_path(default_label, default_case_bounds, accepted_paths, all_instructions, labels + [default_label])
+
+
+def follow_instructions_b(all_instructions):
+    default_bounds = {
+        "x":[1,4000],
+        "m":[1,4000],
+        "a":[1,4000],
+        "s":[1,4000]
+    }
+    accepted_paths = []
+    explore_path("in", default_bounds, accepted_paths, all_instructions, ["in"])
+    sum = 0
+    for path in accepted_paths:
+        possibilities = 1
+        for start, stop in path.values():
+            possibilities *= (stop - start) + 1
+        sum += possibilities
     return sum
 
 
 def b(data):
     lines = data.split("\n\n")[0].split("\n")
-    i = 0
-    upper_bounds = {}
-    lower_bounds = {}
+    all_instructions = {}
     for line in lines:
-        instructions = line.split("{")[-1]
+        name, instructions = line.split("{")
+        all_instructions[name] = []
         instructions = instructions[:-1].split(",")
         for inst in instructions[:-1]:
-            condition = inst.split(":")[0]
+            condition, dest = inst.split(":")
             var_name, operator, val = re.split(r"([<>])", condition)
-            if operator == "<":
-                if var_name not in upper_bounds or upper_bounds[var_name] :
+            all_instructions[name].append((var_name, operator, int(val), dest))
+        all_instructions[name].append(instructions[-1])
+
+    return follow_instructions_b(all_instructions)
 
 
-            
-    return 0
 
 
 year = 2023
@@ -101,8 +134,6 @@ example_data_b = example_data_a
 example_answer_b = 167409079868000
 
 
-
-
 assert(b(example_data_b)==example_answer_b)
-#assert(b(data)==48020869073824)
+assert(b(data)==133973513090020)
 #submit(b(data), part="b", year=year, day=day)
