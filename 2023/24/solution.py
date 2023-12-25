@@ -33,17 +33,6 @@ def a(data, test_area=[200000000000000, 400000000000000]):
 
     return collisions
 
-def find_plane(v1, v2):
-    x1, y1, z1, dx1, dy1, dz1 = v1
-    x2, y2, z2, dx2, dy2, dz2 = v2
-    p1 = np.array((x1,y1,z1))
-    p2 = np.array((dx1,dy1,dz1)) + p1
-    p3 = np.array((x2,y2,z2))
-    n = np.cross(p2-p1, p3-p1)
-    #n = n / max(np.min(np.abs(n)), 1)
-    D = np.sum(-np.multiply(p1, n))
-    return n, D
-
 def b(data):
     lines = []
     all_symbols = []
